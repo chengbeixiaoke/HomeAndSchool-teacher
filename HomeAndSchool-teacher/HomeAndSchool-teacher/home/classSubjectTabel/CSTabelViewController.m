@@ -8,13 +8,34 @@
 
 #import "CSTabelViewController.h"
 #import "Define.h"
-#import "YCXMenu.h"
 #import "timeTabelservice.h"
 #import "CSTabelCollectionViewCell.h"
 
 @interface CSTabelViewController ()
 
-@property (strong, nonatomic) NSMutableArray *items;
+@property (strong, nonatomic)NSMutableArray *items;
+
+@property (assign, nonatomic)float lineHeight;
+
+@property (strong, nonatomic)UILabel *lineLabel;
+
+@property (strong, nonatomic)UITableView *table;
+
+@property (strong, nonatomic)UIVisualEffectView *visualEffectView;
+
+@property (assign, nonatomic)BOOL isShow;
+
+@property (strong, nonatomic)NSArray *classArr;
+
+@property (assign, nonatomic)NSInteger b;
+
+@property (assign, nonatomic)int classid;
+
+@property (assign, nonatomic)NSString *subject;
+
+@property (copy, nonatomic)NSString *className;
+
+@property (strong, nonatomic)UILabel *classNameLabel;
 
 @end
 
@@ -35,22 +56,30 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor whiteColor];
+    self.isShow = NO;
+    self.b = 1;
+    self.classid = 1;
+    self.subject = @"语文";
+    
     
     [self service];
     
     [self navigationHader];
     
-    [self chooseClass];
-    
     [self collection];
+    
+    [self RequestClass];
+    
+    [self classSelect];
 }
 
 - (void)service{
     
-    [timeTabelservice timeTabelClass:1 andSubject:@"语文" andSuccess:^(NSArray *timeTabelArr) {
+    [timeTabelservice timeTabelClass:_classid andSubject:@"语文" andSuccess:^(NSArray *timeTabelArr) {
         
         self.tabelArr = timeTabelArr;
-        NSLog(@"%@",_tabelArr);
+        
+        [self.myCollection reloadData];
         
     } andFail:^(NSString *fail) {
         
@@ -63,13 +92,13 @@
     UICollectionViewFlowLayout *flow = [[UICollectionViewFlowLayout alloc]init];
     flow.minimumInteritemSpacing = 0;
     flow.minimumLineSpacing = 0;
-    self.myCollection = [[UICollectionView alloc]initWithFrame:CGRectMake(0, 104, VIEW_WIDTH, VIEW_HEIGHT - 104) collectionViewLayout:flow];
+    self.myCollection = [[UICollectionView alloc]initWithFrame:CGRectMake(0, 40, VIEW_WIDTH, VIEW_HEIGHT - 104) collectionViewLayout:flow];
     self.myCollection.delegate = self;
     self.myCollection.dataSource = self;
-    self.myCollection.showsVerticalScrollIndicator = NO;
     self.myCollection.backgroundColor = [UIColor whiteColor];
     [self.myCollection registerClass:[CSTabelCollectionViewCell class] forCellWithReuseIdentifier:@"111"];
     self.myCollection.scrollEnabled = NO;
+    self.myCollection.userInteractionEnabled = NO;
     [self.view addSubview:_myCollection];
 
 }
@@ -84,23 +113,27 @@
     
     CSTabelCollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"111" forIndexPath:indexPath];
     
-    //        {
-    //            code = 200;
-    //            data =     (
-    //                        {
-    //                            "iuu_class_class_id" = 1;
-    //                            "timetable_eight" = "\U82f1\U8bed";
-    //                            "timetable_five" = "\U82f1\U8bed";
-    //                            "timetable_four" = "\U8bed\U6587";
-    //                            "timetable_id" = 1;
-    //                            "timetable_one" = "\U8bed\U6587";
-    //                            "timetable_seven" = "\U8bed\U6587";
-    //                            "timetable_six" = "\U6570\U5b66";
-    //                            "timetable_three" = "\U6570\U5b66";
-    //                            "timetable_two" = "\U82f1\U8bed";
-    //                            "timetable_week" = 1;
-    //                        },
+    NSArray *tmparr1 = @[@"",@"星期一",@"星期二",@"星期三",@"星期四",@"星期五",@"星期六"];
 
+    if (indexPath.row < 7) {
+        
+        cell.subjectLabel.text = tmparr1[indexPath.row];
+    
+    }else{
+//        
+//        if (![_tabelArr[indexPath.row - 7]isEqualToString:@""]) {
+//           
+//            cell.subjectLabel.backgroundColor = COLOR(46, 184, 245, 1);
+//            
+//        }else{
+//            
+//            cell.subjectLabel.backgroundColor = [UIColor whiteColor];
+//            
+//        }
+    
+        cell.subjectLabel.text = _tabelArr[indexPath.row - 7];
+
+    }
     
     cell.backgroundColor = [UIColor whiteColor];
     return cell;
@@ -113,64 +146,33 @@
 //    NSLog(@"%f",from);
     int from_width = (int)from;
     int from_height = VIEW_WIDTH - 6 *from_width;
-    
-    UILabel *lineLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, from_height + 10 * from_width *3/4 -5, VIEW_WIDTH, 1)];
-    lineLabel.backgroundColor = COLOR(46, 184, 245, 0.5);
-    [self.myCollection addSubview:lineLabel];
-    
+    self.lineHeight = from_height + 10 * from_width *3/4 -5;
+    [self firstlab];
     if (indexPath.row < 7) {
         if (indexPath.row == 0) {
-            
             return CGSizeMake(from_height, from_height);
-            
         }else{
-            
             return CGSizeMake(from_width, from_height);
-            
         }
     }else{
-        
         if (indexPath.row%7 == 0) {
-            
             return CGSizeMake(from_height, from_width*3/4);
-            
         }else{
-            
             return CGSizeMake(from_width, from_width*3/4);
-            
         }
     }
 }
 
-- (void)collectionView:(UICollectionView *)collectionView didHighlightItemAtIndexPath:(NSIndexPath *)indexPath{
-    
-    UICollectionViewCell *cell = (UICollectionViewCell *)[collectionView cellForItemAtIndexPath:indexPath];
-    
-    if (cell.backgroundColor == [UIColor whiteColor]) {
-        
-        cell.backgroundColor = [UIColor groupTableViewBackgroundColor];
-        
-    }else if(cell.backgroundColor == [UIColor groupTableViewBackgroundColor]){
-        
-        cell.backgroundColor = [UIColor whiteColor];
-        
+-(UILabel *)firstlab{
+     //判断是否已经有了，若没有，则进行实例化
+    if (!_lineLabel) {
+        self.lineLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, _lineHeight + 104, VIEW_WIDTH, 1)];
+        self.lineLabel.backgroundColor = COLOR(46, 184, 245, 0.5);
+        [self.view addSubview:_lineLabel];
     }
+    return _lineLabel;
 }
 
-- (void)collectionView:(UICollectionView *)collectionView didUnhighlightItemAtIndexPath:(NSIndexPath *)indexPath{
-    
-    UICollectionViewCell *cell = (UICollectionViewCell *)[collectionView cellForItemAtIndexPath:indexPath];
-    
-    if (cell.backgroundColor == [UIColor groupTableViewBackgroundColor]) {
-        
-        [UIView animateWithDuration:0.3 animations:^{
-            
-            cell.backgroundColor = [UIColor whiteColor];
-            
-        }];
-        
-    }
-}
 - (void)navigationHader{
     
     self.navigationItem.title = @"课程表";
@@ -182,14 +184,14 @@
     UIBarButtonItem *leftItem = [[UIBarButtonItem alloc]initWithCustomView:leftBtn];
     self.navigationItem.leftBarButtonItem = leftItem;
     
+    UIButton *nextBtn = [[UIButton alloc]initWithFrame:CGRectMake(315, 10, 30, 20)];
+    [nextBtn setTitle:@"班级" forState:UIControlStateNormal];
+    nextBtn.titleLabel.font = [UIFont systemFontOfSize:15];
+    [nextBtn setTitleColor:[UIColor grayColor] forState:UIControlStateHighlighted];
+    [nextBtn addTarget:self action:@selector(next0) forControlEvents:UIControlEventTouchUpInside];
     
-//
-//    UIButton *rightBtn = [[UIButton alloc]initWithFrame:CGRectMake(15, 10, 16, 16)];
-//    [rightBtn setBackgroundImage:[UIImage imageNamed:@"right"] forState:UIControlStateNormal];
-//    [rightBtn addTarget:self action:@selector(rightButton) forControlEvents:UIControlEventTouchUpInside];
-//    
-//    UIBarButtonItem *rightItem = [[UIBarButtonItem alloc]initWithCustomView:rightBtn];
-//    self.navigationItem.rightBarButtonItem = rightItem;
+    UIBarButtonItem *rightItem = [[UIBarButtonItem alloc]initWithCustomView:nextBtn];
+    self.navigationItem.rightBarButtonItem = rightItem;
     
 }
 
@@ -199,78 +201,118 @@
     
 }
 
-//- (void)rightButton{
-//
-//    
-//}
-
-- (void)chooseClass{
+- (void)RequestClass{
     
-    UIButton *chooseClass = [[UIButton alloc]initWithFrame:CGRectMake(80, 69, 160, 30)];
-    [chooseClass setTitle:@"一年级(1)班" forState:UIControlStateNormal];
-    chooseClass.titleLabel.font = FONT(15);
-    [chooseClass setTintColor:[UIColor whiteColor]];
-    chooseClass.backgroundColor = COLOR(84, 190, 240, 1);
-    chooseClass.layer.cornerRadius = 5;
-    [self.view addSubview:chooseClass];
-    [chooseClass addTarget:self action:@selector(choose:) forControlEvents:UIControlEventTouchDown];
+//    NSDictionary *dic = @{@"teacher":@"1"};
     
-    UIButton *imageBut = [[UIButton alloc]initWithFrame:CGRectMake(210, 74, 30, 30)];
-    [imageBut setImage:[UIImage imageNamed:@"butImage"] forState:UIControlStateNormal];
-    [self.view addSubview:imageBut];
-    [imageBut addTarget:self action:@selector(choose:) forControlEvents:UIControlEventTouchDown];
+//    [KaoqinService class0:dic andSuccess:^(NSArray *arr) {
+//        
+//        if (arr.count > 0) {
+//            
+//            self.classArr = arr;
+//            self.navigationItem.title = _classArr[0];
+//        }else{
+//            self.navigationItem.title = @"无班级";
+//        }
+//    }];
     
+    self.classArr = @[@"一年级一班",@"二年级一班",@"三年级一班"];
+    
+    self.className = @"一年级一班";
 }
 
-- (void)choose:(UIButton *)sender{
+//班级选择
+- (void)classSelect{
     
-    [YCXMenu setTintColor:COLOR(84, 190, 240, 1)];
-    [YCXMenu showMenuInView:self.view fromRect:CGRectMake(80, 104, 160, 0) menuItems:self.items selected:^(NSInteger index, YCXMenuItem *item) {
-        
-        NSString *str = item.title;
-        [sender setTitle:str forState:UIControlStateNormal];
-        
-//        self.classId = 2;
-        
-//        [self service];
-        
-    }];
+    self.visualEffectView = [[UIVisualEffectView alloc]initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
+    self.visualEffectView.frame = CGRectMake(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+    self.visualEffectView.alpha = 0.3;
+    self.visualEffectView.hidden = YES;
+    UITapGestureRecognizer *recognizer = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(next0)];
+    [self.visualEffectView addGestureRecognizer:recognizer];
+    [self.view addSubview:_visualEffectView];
+    
+    self.table = [[UITableView alloc]initWithFrame:CGRectMake(315, 65, 0, 0)];
+    self.table.backgroundColor = [UIColor clearColor];
+    self.table.delegate = self;
+    self.table.dataSource = self;
+    self.table.scrollEnabled = NO;
+    self.table.layer.cornerRadius = 10;
+    self.table.tableFooterView = [[UIView alloc]init];
+    [self.view addSubview:_table];
+    
+    self.classNameLabel = [[UILabel alloc]initWithFrame:CGRectMake(60, 69, 200, 30)];
+    self.classNameLabel.text = @"一年级一班";
+    self.classNameLabel.font = FONT(15);
+    self.classNameLabel.textAlignment = NSTextAlignmentCenter;
+    self.classNameLabel.textColor = COLOR(50, 50, 50, 1);
+    [self.view addSubview:_classNameLabel];
 }
 
-- (NSMutableArray *)items{
+//班级选择方法
+- (void)next0{
     
-    if (!_items) {
+    if (self.navigationItem.title) {
         
-        YCXMenuItem *menuTitle = [YCXMenuItem menuTitle:@"班级" WithIcon:nil];
-        menuTitle.foreColor = [UIColor whiteColor];
-        menuTitle.titleFont = FONT(15);
-        
-        _items = [@[menuTitle,
-                    [YCXMenuItem menuItem:@"二年级1班"
-                                    image:nil
-                                      tag:5000
-                                 userInfo:@{@"title":@"Menu"}],
-                    [YCXMenuItem menuItem:@"四年级1班"
-                                    image:nil
-                                      tag:5001
-                                 userInfo:@{@"title":@"Menu"}],
-                    [YCXMenuItem menuItem:@"五年级1班"
-                                    image:nil
-                                      tag:5002
-                                 userInfo:@{@"title":@"Menu"}],
-                    ] mutableCopy];
+        if (_isShow == NO) {
+            self.isShow = YES;
+            self.visualEffectView.hidden = NO;
+            [UIView animateWithDuration:0.2 animations:^{
+                self.table.frame = CGRectMake(215, 65, 100, 20*_classArr.count);
+            }];
+            
+        }else{
+            self.isShow = NO;
+            self.visualEffectView.hidden = YES;
+            [UIView animateWithDuration:0.2 animations:^{
+                self.table.frame = CGRectMake(315, 65, 0, 0);
+            }];
+        }
+    }else{
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"提示" message:@"请检查网络！" preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *action = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+            
+        }];
+        [alert addAction:action];
+        [self presentViewController:alert animated:YES completion:nil];
     }
-    return _items;
 }
 
-- (void)setItems:(NSMutableArray *)items {
-    _items = items;
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    return _classArr.count;
 }
 
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    return 20;
+}
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    
+    static NSString *str = @"123";
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:str];
+    if (cell == nil) {
+        cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:str];
+    }
+    
+    cell.textLabel.text = _classArr[indexPath.row];
+    cell.textLabel.textAlignment = 1;
+    cell.textLabel.font = [UIFont systemFontOfSize:12];
+    cell.backgroundColor = [UIColor whiteColor];
+    return cell;
+    
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    
+    [self next0];
+    self.classNameLabel.text = _classArr[indexPath.row];
+    self.b = indexPath.row + 1;
+    
+//    [self service];
+    
+}
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
 }
-
 @end

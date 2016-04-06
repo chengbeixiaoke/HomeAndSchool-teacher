@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface CSTabelViewController : UIViewController<UICollectionViewDataSource,UICollectionViewDelegateFlowLayout>
+@interface CSTabelViewController : UIViewController<UICollectionViewDataSource,UICollectionViewDelegateFlowLayout,UITableViewDelegate,UITableViewDataSource>
 
 @property (strong, nonatomic)UICollectionView *myCollection;
 

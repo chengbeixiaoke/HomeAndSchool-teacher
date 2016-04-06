@@ -11,10 +11,19 @@
 #import "setHWTableViewCell.h"
 #import "settextViewController.h"
 #import "homeWorkService.h"
+#import "addImageViewController.h"
 
 @interface setHWViewController ()
 
 @property (assign, nonatomic)int a;
+
+@property (strong, nonatomic)UIButton *addImageBut;
+
+@property (strong, nonatomic)UIScrollView *imagesScroll;
+
+@property (strong, nonatomic)NSMutableArray *imageViewArr;
+
+@property (strong, nonatomic) UIButton *deleteBtn;
 
 @end
 
@@ -26,10 +35,14 @@
     self.homeWorkArr = [NSMutableArray arrayWithCapacity:0];
     self.a = 0;
     self.view.backgroundColor = [UIColor whiteColor];
+    self.imageViewArr = [[NSMutableArray alloc]init];
+
     
     [self navigationHader];
+    
     [self mainView];
     
+    [self addImage];
 }
 
 - (void)navigationHader{
@@ -53,7 +66,6 @@
     UIBarButtonItem *rightItem = [[UIBarButtonItem alloc]initWithCustomView:rightBtn];
     self.navigationItem.rightBarButtonItem = rightItem;
 
-    
 }
 
 - (void)leftButton{
@@ -97,10 +109,19 @@
         } andWithFail:^(NSString *fail) {
             NSLog(@"%@",fail);
         }];
+        UIImage *imagess = [UIImage imageNamed:@"homeWorkBak"];
+        NSArray *arrr = @[imagess];
+        
+        [homeWorkService setImg:arrr andHomeWorkId:1 andSubject:@"语文" andSuccess:^(NSString *str) {
+            
+        } andFail:^(NSString *str2) {
+            
+        }];
         
         if (_delegate != nil && [_delegate respondsToSelector:@selector(reload)]) {
             
             [_delegate reload];
+            
             [self.navigationController popViewControllerAnimated:YES];
             
         }
@@ -126,13 +147,13 @@
     
     CGSize size = frameView.frame.size;
     
-    self.HWContentTable = [[UITableView alloc]initWithFrame:CGRectMake(0, 5, size.width, 300)];
+    self.HWContentTable = [[UITableView alloc]initWithFrame:CGRectMake(0, 0, size.width, size.height - 35 - 10)];
     self.HWContentTable.dataSource = self;
     self.HWContentTable.delegate = self;
     self.HWContentTable.separatorStyle = UITableViewCellSeparatorStyleNone;
     [frameView addSubview:_HWContentTable];
     
-    UIButton *addHWContent = [[UIButton alloc]initWithFrame:CGRectMake(100, 310, 120, 34)];
+    UIButton *addHWContent = [[UIButton alloc]initWithFrame:CGRectMake(100, size.height - 35 - 5, 120, 35)];
     [addHWContent setTitle:@"+点击添加" forState:UIControlStateNormal];
     [addHWContent setTitleColor:COLOR(50, 50, 50, 1) forState:UIControlStateNormal];
     addHWContent.titleLabel.font = FONT(15);
@@ -155,7 +176,6 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-    
     if (_homeWorkArr.count == 0) {
         return 1;
     }else{
@@ -206,6 +226,94 @@
     setTextVc.content = cell.HWcontentLabel.text;
     [self.homeWorkArr removeObject:cell.HWcontentLabel.text];
     [self.navigationController pushViewController:setTextVc animated:YES];
+    
+}
+
+- (void)addImage{
+    
+    self.addImageBut = [[UIButton alloc]initWithFrame:CGRectMake(10, (VIEW_HEIGHT - 64)/2 + 110, (VIEW_WIDTH-80)/5, (VIEW_WIDTH-80)/5)];
+    [self.addImageBut setImage:[UIImage imageNamed:@"addImage.png"] forState:UIControlStateNormal];
+    [self.addImageBut addTarget:self action:@selector(addImages) forControlEvents:UIControlEventTouchDown];
+    [self.view addSubview:self.addImageBut];
+    
+}
+
+- (void)addImages{
+    
+    addImageViewController *vc=[[addImageViewController alloc]init];
+    vc.delegate = self;
+    [self.navigationController pushViewController:vc animated:YES];
+
+}
+
+#pragma mark - 代理回传的照片的处理
+- (void)turnImages:(NSMutableArray *)selectAllImages{
+    
+    self.imagesScroll = [[UIScrollView alloc]initWithFrame:CGRectMake(10, (VIEW_HEIGHT - 64)/2+110, VIEW_WIDTH - 20, (VIEW_WIDTH-80)/5)];
+    self.imagesScroll.backgroundColor = [UIColor whiteColor];
+    self.imagesScroll.contentOffset = CGPointMake(20, (VIEW_HEIGHT - 64)/2 +110);
+    self.imagesScroll.contentSize = CGSizeMake(selectAllImages.count*((VIEW_WIDTH-80)/5+10), (VIEW_WIDTH-80)/5);
+    self.imagesScroll.showsVerticalScrollIndicator = NO;
+    NSMutableArray *lessTenImagesArr = [NSMutableArray arrayWithCapacity:0];
+    
+    if (selectAllImages.count > 9) {
+        
+        for (int i = 0; i < 9; i++) {
+            
+            [lessTenImagesArr addObject:selectAllImages[i]];
+            
+        }
+        
+    }else{
+        
+        lessTenImagesArr = selectAllImages;
+        
+    }
+    
+    self.imageViewArr = lessTenImagesArr;
+    
+    for (int i = 0; i < lessTenImagesArr.count; i ++) {
+        
+        UIImageView *imageView = [[UIImageView alloc]initWithFrame:CGRectMake(i*((VIEW_WIDTH-80)/5+10), 0, (VIEW_WIDTH-80)/5, (VIEW_WIDTH-80)/5)];
+        imageView.image = lessTenImagesArr[i];
+        imageView.tag = i + 4000;
+        UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc]initWithTarget:self action:@selector(longPress:)];
+        imageView.userInteractionEnabled = YES;
+        [imageView addGestureRecognizer:longPressGesture];
+        [self.imagesScroll addSubview:imageView];
+    }
+    
+    [self.view addSubview:_imagesScroll];
+}
+
+- (void)longPress:(UILongPressGestureRecognizer *)sender{
+    
+    if (sender.state == UIGestureRecognizerStateBegan) {
+        
+        UIButton *but = [[UIButton alloc]initWithFrame:CGRectMake((VIEW_WIDTH-80)/5-20, 0, 20, 20)];
+        but.backgroundColor = [UIColor orangeColor];
+        but.hidden = NO;
+        but.tag = [sender view].tag;
+        [but addTarget:self action:@selector(deleteImage:) forControlEvents:UIControlEventTouchUpInside];
+        [[self.imagesScroll viewWithTag:[sender view].tag] addSubview:but];
+    }
+}
+
+- (void)deleteImage:(UIButton *)sender{
+    
+    for (long int i = sender.tag; i < self.imageViewArr.count+4000-1; i++) {
+        
+        UIImageView *before = [self.imagesScroll viewWithTag:i];
+        UIImageView *afterImage = [self.imagesScroll viewWithTag:i + 1];
+        
+        before.image = afterImage.image;
+    }
+    
+    [[self.imagesScroll viewWithTag:self.imageViewArr.count + 4000 - 1] removeFromSuperview];
+    [self.imageViewArr removeObjectAtIndex:sender.tag - 4000];
+    self.imagesScroll.contentSize = CGSizeMake(self.imageViewArr.count*((VIEW_WIDTH-80)/5 + 10), (VIEW_WIDTH-80)/5);
+    
+    [sender setHidden:YES];
     
 }
 

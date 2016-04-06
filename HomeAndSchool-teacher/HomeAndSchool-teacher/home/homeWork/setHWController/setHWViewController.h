@@ -7,7 +7,6 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "TZImagePickerController.h"
 #import "lookHomeWorkViewController.h"
 
 @protocol homeWorkTextDelegate <NSObject>
@@ -16,7 +15,13 @@
 
 @end
 
-@interface setHWViewController : UIViewController<UIImagePickerControllerDelegate,UIActionSheetDelegate,UINavigationControllerDelegate,UITableViewDataSource,UITableViewDelegate,homeWorkTextDelegate>
+@protocol turnBackDelegate <NSObject>
+
+- (void)turnImages:(NSMutableArray *)selectAllImages;
+
+@end
+
+@interface setHWViewController : UIViewController<UIImagePickerControllerDelegate,UIActionSheetDelegate,UINavigationControllerDelegate,UITableViewDataSource,UITableViewDelegate,homeWorkTextDelegate,turnBackDelegate>
 
 @property (strong, nonatomic)UIImageView *headImage;
 

@@ -20,7 +20,7 @@
         self.subjectLabel.textAlignment = NSTextAlignmentCenter;
         self.subjectLabel.layer.borderColor = COLOR(46, 184, 245, 0.5).CGColor;
         self.subjectLabel.layer.borderWidth = 0.5;
-        self.subjectLabel.textColor = COLOR(150, 150, 150, 1);
+        self.subjectLabel.textColor = COLOR(50, 50, 50, 1);
         [self.contentView addSubview:_subjectLabel];
         
     }
